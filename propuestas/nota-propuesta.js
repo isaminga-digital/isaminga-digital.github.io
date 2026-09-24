@@ -2,11 +2,14 @@
 //
 // Se incluye en las cuatro páginas de cada propuesta con
 //   <script src="../nota-propuesta.js" defer></script>
-// Detecta la propuesta por la carpeta de la URL y muestra una tarjeta que se
-// puede cerrar. Al cerrarla queda una pastilla para volver a abrirla. Durante
-// la sesión recuerda que se cerró, para no reaparecer en cada página de la
-// misma propuesta. Estilo neutro, igual en las tres: describe la propuesta y
-// no forma parte de su diseño.
+// Detecta la propuesta por la carpeta de la URL y deja una pastilla "Sobre esta
+// propuesta" que abre una tarjeta con la descripción. La tarjeta empieza
+// cerrada; si se abre, sigue abierta en las demás páginas de la misma
+// propuesta durante la sesión. Dentro del visor (propuestas/index.html) la
+// pastilla y la tarjeta se anclan a la izquierda, bajo el interruptor de
+// propuestas; en una propuesta abierta sola quedan abajo a la derecha. Estilo
+// neutro, igual en las tres: describe la propuesta y no forma parte de su
+// diseño.
 (function () {
   'use strict'
 
@@ -57,7 +60,7 @@
   var estilos = document.createElement('style')
   estilos.textContent = [
     '.np-tarjeta, .np-pastilla { font-family: "Inter", system-ui, sans-serif; color: #1F2937; }',
-    '.np-tarjeta { position: fixed; z-index: 1000; right: 1rem; bottom: 1rem; width: min(23rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; background: #fff; border: 1px solid #E5E7EB; border-radius: 1rem; box-shadow: 0 24px 60px -20px rgba(15,23,42,.45); padding: 1.25rem 1.25rem 1.1rem; font-size: .9rem; line-height: 1.55; }',
+    '.np-tarjeta { position: fixed; z-index: 1000; right: 1rem; bottom: 1rem; width: min(23rem, calc(100vw - 2rem)); max-height: calc(100vh - 2rem); overflow: auto; background: #fff; border: 1px solid #E5E7EB; border-radius: 1rem; box-shadow: 0 24px 60px -20px rgba(15,23,42,.45); padding: 1rem 1.1rem .9rem; font-size: .875rem; line-height: 1.45; }',
     '.np-tarjeta[hidden], .np-pastilla[hidden] { display: none; }',
     '.np-entra { animation: np-entrar .35s cubic-bezier(.2,.8,.2,1) both; }',
     '@keyframes np-entrar { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }',
@@ -67,27 +70,34 @@
     '.np-tarjeta h2 { margin: .1rem 0 0; font-family: inherit; font-size: 1.1rem; line-height: 1.25; letter-spacing: -0.01em; font-weight: 700; color: #111827; }',
     '.np-cerrar { position: absolute; top: .75rem; right: .75rem; display: inline-grid; place-items: center; width: 2rem; height: 2rem; border: 0; border-radius: .5rem; background: transparent; color: #374151; cursor: pointer; }',
     '.np-cerrar:hover { background: #F3F4F6; }',
-    '.np-tarjeta dl { margin: 1rem 0 0; display: grid; gap: .65rem; }',
+    '.np-tarjeta dl { margin: .75rem 0 0; display: grid; gap: .45rem; }',
     '.np-tarjeta dt { font-size: .72rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #4B5563; }',
     '.np-tarjeta dd { margin: .1rem 0 0; }',
     '.np-colores { display: flex; gap: .3rem; margin-top: .3rem; }',
     '.np-colores span { width: 1.35rem; height: 1.35rem; border-radius: .35rem; border: 1px solid rgba(0,0,0,.1); }',
-    '.np-aviso { margin: 1rem 0 0; padding: .65rem .8rem; border-radius: .6rem; background: #FFF7ED; border: 1px solid #FED7AA; color: #7C2D12; font-size: .82rem; }',
-    '.np-pie { margin: .9rem 0 0; font-size: .85rem; }',
-    '.np-pie a { color: #0448A3; font-weight: 600; }',
+    '.np-aviso { margin: .75rem 0 0; padding: .55rem .75rem; border-radius: .6rem; background: #FFF7ED; border: 1px solid #FED7AA; color: #7C2D12; font-size: .82rem; }',
     '.np-pastilla { position: fixed; z-index: 1000; right: 1rem; bottom: 1rem; display: inline-flex; align-items: center; gap: .5rem; border: 0; border-radius: 999px; background: #1F2937; color: #fff; font-size: .85rem; font-weight: 600; padding: .6rem 1rem .6rem .6rem; cursor: pointer; box-shadow: 0 12px 30px -12px rgba(15,23,42,.6); }',
     '.np-pastilla b { display: inline-grid; place-items: center; width: 1.6rem; height: 1.6rem; border-radius: 999px; background: #fff; color: #1F2937; font-size: .8rem; }',
     '.np-pastilla:hover { background: #111827; }',
     '.np-tarjeta :focus-visible, .np-pastilla:focus-visible { outline: 3px solid #FE8119; outline-offset: 2px; }',
     '@media (max-width: 600px) { .np-tarjeta { right: .5rem; left: .5rem; bottom: .5rem; width: auto; max-height: 45vh; } .np-pastilla { right: .75rem; bottom: .75rem; } }',
     '@media (prefers-reduced-motion: reduce) { .np-entra { animation: none; } }',
+    // Dentro del visor: el interruptor de propuestas mide 1.75rem y tiene su
+    // centro a 11rem del borde superior (AJUSTES.posicion en index.html), así
+    // que su borde inferior queda en 11.875rem; .75rem de separación da
+    // 12.625rem. La tarjeta ocupa hasta 1rem del borde inferior.
+    '.np-pastilla.np-visor { right: auto; bottom: auto; left: 1rem; top: 12.625rem; }',
+    '.np-tarjeta.np-visor { right: auto; bottom: auto; left: 1rem; top: 12.625rem; max-height: calc(100vh - 13.625rem); }',
+    '@media (max-width: 600px) { .np-pastilla.np-visor { left: .75rem; } .np-tarjeta.np-visor { left: .5rem; right: .5rem; bottom: auto; top: 12.625rem; max-height: calc(100vh - 13.375rem); } }',
   ].join('\n')
   document.head.appendChild(estilos)
 
   var colores = p.paleta.map(function (c) { return '<span style="background:' + c + '"></span>' }).join('')
 
+  var enVisor = window.self !== window.top
+
   var tarjeta = document.createElement('section')
-  tarjeta.className = 'np-tarjeta'
+  tarjeta.className = 'np-tarjeta' + (enVisor ? ' np-visor' : '')
   tarjeta.setAttribute('role', 'dialog')
   tarjeta.setAttribute('aria-labelledby', 'np-titulo')
   tarjeta.innerHTML =
@@ -103,14 +113,13 @@
     '<div><dt>Tipografía</dt><dd>' + p.tipografia + '</dd></div>' +
     '<div><dt>Testimonios y cifras</dt><dd>' + p.pendientes + '</dd></div>' +
     '</dl>' +
-    '<p class="np-aviso">Los textos son borradores en validación con Marcelo.</p>' +
-    '<p class="np-pie"><a href="../index.html" target="_top">Ver las tres propuestas</a></p>'
+    '<p class="np-aviso">Primer enfoque. Los textos son de muestra e ilustran el tono; el contenido real se debe definir.</p>'
 
   var pastilla = document.createElement('button')
   pastilla.type = 'button'
-  pastilla.className = 'np-pastilla'
+  pastilla.className = 'np-pastilla' + (enVisor ? ' np-visor' : '')
   pastilla.setAttribute('aria-label', 'Abrir la descripción de la propuesta ' + p.letra)
-  pastilla.innerHTML = '<b aria-hidden="true">' + p.letra + '</b>Sobre esta propuesta'
+  pastilla.innerHTML = '<b aria-hidden="true">?</b>Sobre esta propuesta'
 
   var cerrar = tarjeta.querySelector('.np-cerrar')
 
@@ -145,7 +154,8 @@
   document.body.appendChild(tarjeta)
   document.body.appendChild(pastilla)
 
-  // Se abre sola la primera vez; si ya se cerró en esta sesión, queda la pastilla.
-  if (leer() === 'cerrada') { tarjeta.hidden = true; pastilla.hidden = false }
-  else abrir(false)
+  // Empieza cerrada. Solo se abre sola si el visitante la abrió antes en esta
+  // sesión (y no la cerró), para que lo acompañe entre páginas de la propuesta.
+  if (leer() === 'abierta') abrir(false)
+  else { tarjeta.hidden = true; pastilla.hidden = false }
 })()
